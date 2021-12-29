@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "openbestand"
+version = "0.1.0"
+description = "An opensource client for the Bestand posture corrector."
+authors = ["Jason P. Leasure <jpleasu@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+bleak = "^0.13.0"
+aioconsole = "^0.3.3"
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.2"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+openbestand_cli = "openbestand.cli:main"
+openbestand_gui = "openbestand.gui:main"
+openbestand_rssi = "openbestand.cli:main_rssi"
