@@ -101,9 +101,9 @@ class ConsoleClient(BleakClient):
             r.calibrating = True
             # must be sent twice *shrug*
             await aprint('Calibrating')
-            await self.write_gatt_char(BATTERY_LEVEL, bytes(r))
+            await self.write_gatt_char(BATTERY_LEVEL, bytes(r), response=True)
             await asyncio.sleep(.1)
-            await self.write_gatt_char(BATTERY_LEVEL, bytes(r))
+            await self.write_gatt_char(BATTERY_LEVEL, bytes(r), response=True)
 
             # 3 seconds to calibrate should be plenty
             for count in range(6):
@@ -139,7 +139,7 @@ class ConsoleClient(BleakClient):
             r.buzz_pattern = x[1]
             await aprint(f'Setting buzz pattern to {r.buzz_pattern}.')
 
-        await self.write_gatt_char(BATTERY_LEVEL, bytes(r))
+        await self.write_gatt_char(BATTERY_LEVEL, bytes(r), response=True)
         return ret
 
 

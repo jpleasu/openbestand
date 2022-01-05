@@ -100,7 +100,7 @@ class GUIClient(BleakClient):
             return
         else:
             return
-        await self.write_gatt_char(BATTERY_LEVEL, bytes(r))
+        await self.write_gatt_char(BATTERY_LEVEL, bytes(r), response=True)
 
 
 class App:
