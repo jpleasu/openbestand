@@ -70,7 +70,7 @@ class GUIClient(BleakClient):
 
                     <right>     increase delay
                     <left>      decrease delay
-                    o
+
                     <enter>     print status
         ''')
 

@@ -10,10 +10,9 @@ import argparse
 BATTERY_LEVEL = '00002a19-0000-1000-8000-00805f9b34fb'
 SERVICE_CHANGED = '00002a05-0000-1000-8000-00805f9b34fb'
 
-
 async def find_device(**kwargs):
     """return a Bestand BLEDevice or None if one isn't found."""
-    return await BleakScanner.find_device_by_filter(lambda d, ad: d.name == 'Bestand', **kwargs)
+    return await BleakScanner.find_device_by_filter(lambda d, ad: d.name == 'Bestand', service_uuids=['1812'], **kwargs)
 
 
 class Record(Structure):

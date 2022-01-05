@@ -170,7 +170,7 @@ async def amain_rssi(**kwargs):
     loop = asyncio.get_event_loop()
     while True:
         t0 = loop.time()
-        device = await BleakScanner.find_device_by_filter(lambda d, ad: d.name == 'Bestand', timeout=timeout, **kwargs)
+        device = await find_device(**kwargs)
         if device is None:
             await aprint('---')
         else:
