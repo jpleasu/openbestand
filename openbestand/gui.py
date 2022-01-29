@@ -12,13 +12,13 @@ Todo:
 import time
 
 import asyncio
-from aioconsole import aprint
 import threading
 
 from bleak import BleakClient
 from .core import Record, BATTERY_LEVEL, find_device, parse_args
 
 import tkinter as tk
+import tkinter.scrolledtext as tkscrolledtext
 
 INITIAL_WIDTH = 1024
 INITIAL_HEIGHT = 100
@@ -45,62 +45,6 @@ class GUIClient(BleakClient):
         if buff != self.last_buff:
             self.last_buff = buff
             self.r = Record.from_buffer(buff)
-            # await aprint(f'{self.r}')
-
-    def handle(self, keysym):
-        self.loop.call_soon_threadsafe(
-            self.loop.create_task, self.ahandle(keysym))
-
-    async def ahandle(self, keysym):
-        global running
-        r = Record.from_buffer(self.last_buff)
-        keysym = keysym.lower()
-        if keysym == 'h' or keysym == '?':
-            print('''
-                    h           help
-
-                    q           quit
-
-                    x           power off and quit
-
-                    b           toggle buzzer
-
-                    <down>      lower expectations
-                    <up>        raise expectations
-
-                    <right>     increase delay
-                    <left>      decrease delay
-
-                    <enter>     print status
-        ''')
-
-        elif keysym == 'q':
-            running = False
-            return
-        elif keysym == 'x':
-            r.power_off()
-            running = False
-        elif keysym == 'b':
-            r.toggle_buzz()
-            await aprint(f'buzz {"on" if r.buzz else "off"}')
-        elif keysym == 'down':
-            r.target = min(90, r.target + 5)
-            await aprint(f'target {r.target}')
-        elif keysym == 'up':
-            r.target = max(0, r.target - 5)
-            await aprint(f'target {r.target}')
-        elif keysym == 'right':
-            r.delay = min(60, r.delay + 1)
-            await aprint(f'delay {r.delay}')
-        elif keysym == 'left':
-            r.delay = max(0, r.delay - 1)
-            await aprint(f'delay {r.delay}')
-        elif keysym == 'return':
-            await aprint(f'-- {r} --')
-            return
-        else:
-            return
-        await self.write_gatt_char(BATTERY_LEVEL, bytes(r), response=True)
 
 
 class App:
@@ -113,15 +57,15 @@ class App:
 
         self.gc = gc
 
-        butts = tk.Frame(self.root)
-        butt1 = tk.Button(butts, text='butt1')
-        butt2 = tk.Button(butts, text='butt2')
+        self.pane = tk.PanedWindow(self.root, orient=tk.VERTICAL)
+        self.pane.pack(fill=tk.BOTH, expand=1)
 
         self.canvas = tk.Canvas(
-            self.root,
+            self.pane,
             width=INITIAL_WIDTH,
             height=INITIAL_HEIGHT,
             bg='black')
+        self.pane.add(self.canvas)
 
         self.ind_width = 10
         self.width = INITIAL_WIDTH - self.ind_width
@@ -133,20 +77,102 @@ class App:
         self.ind_id = None
         self.target_id = None
 
+        self.scrolledtext = tkscrolledtext.ScrolledText(
+            self.pane,
+            height=1,
+            spacing3=2,  # spacing after last line in a block
+            state=tk.DISABLED,  # read-only
+            highlightthickness=0,
+            takefocus=False
+        )
+        self.pane.add(self.scrolledtext)
+
         self.canvas.bind('<Configure>', self.on_resize)
         self.root.bind('<KeyPress>', self.on_keypress)
-
-        self.canvas.pack(side='bottom', fill='both', expand=True)
-
-        #butts.pack(side='top', fill='x', expand=False)
-        butt1.grid(row=0, column=0, sticky='ew')
-        butt2.grid(row=0, column=1, sticky='ew')
 
         # initial resize starts first draw
         self.stepper()
 
+    def appendText(self, s):
+        self.scrolledtext.configure(state='normal')
+        self.scrolledtext.insert('end', s)
+        self.scrolledtext.configure(state='disabled')
+        self.scrolledtext.see('end')
+
     def on_keypress(self, event):
-        self.gc.handle(event.keysym)
+        loop = self.gc.loop
+        loop.call_soon_threadsafe(loop.create_task, self.ahandle(event.keysym))
+
+    async def ahandle(self, keysym):  # noqa
+        global running
+        r = Record.from_buffer(self.gc.last_buff)
+        keysym = keysym.lower()
+        if keysym == 'h' or keysym == '?':
+            self.appendText('''
+                    h           help
+
+                    q           quit
+
+                    x           power off and quit
+
+                    b           toggle buzzer
+
+                    c           calibrate
+
+                    <down>      lower expectations
+                    <up>        raise expectations
+
+                    <right>     increase delay
+                    <left>      decrease delay
+
+                    <enter>     print status''')
+
+        elif keysym == 'q':
+            running = False
+            return
+        elif keysym == 'x':
+            r.power_off()
+            running = False
+        elif keysym == 'b':
+            r.toggle_buzz()
+            self.appendText(f'\nbuzz {"on" if r.buzz else "off"}')
+
+        elif keysym == 'c':
+            r.calibrating = True
+            # must be sent twice *shrug*
+            self.appendText('\nCalibrating.. ')
+            await self.gc.write_gatt_char(BATTERY_LEVEL, bytes(r), response=True)
+            await asyncio.sleep(.1)
+            await self.gc.write_gatt_char(BATTERY_LEVEL, bytes(r), response=True)
+
+            # 3 seconds to calibrate should be plenty
+            for count in range(6):
+                r = Record.from_buffer(self.gc.last_buff)
+                if not r.calibrating:
+                    break
+                self.appendText('Calibrating .. ')
+                await asyncio.sleep(.5)
+            r.calibrating = False
+            self.appendText('Done calibrating')
+
+        elif keysym == 'down':
+            r.target = min(90, r.target + 5)
+            self.appendText(f'\ntarget {r.target}')
+        elif keysym == 'up':
+            r.target = max(0, r.target - 5)
+            self.appendText(f'\ntarget {r.target}')
+        elif keysym == 'right':
+            r.delay = min(60, r.delay + 1)
+            self.appendText(f'\ndelay {r.delay}')
+        elif keysym == 'left':
+            r.delay = max(0, r.delay - 1)
+            self.appendText(f'\ndelay {r.delay}')
+        elif keysym == 'return':
+            self.appendText(f'\n-- {r} --')
+            return
+        else:
+            return
+        await self.gc.write_gatt_char(BATTERY_LEVEL, bytes(r), response=True)
 
     def draw_line(self, i):
         i = i % len(self.data)
@@ -247,6 +273,8 @@ class App:
 
 
 class BleakThread(threading.Thread):
+    """a non-daemon, non-main thread to run bleak's event loop in."""
+
     def __init__(self, **kwargs):
         super().__init__(daemon=False)
         self.d = None
@@ -289,13 +317,14 @@ def main():
 
     if not bt.wait_for_connect():
         print("""Bestand not found.  Verify that your device is in pairing mode with a blinking blue light.""")
+        running = False
+        time.sleep(1.1)
         return
 
     root = tk.Tk()
-    root.geometry(f'{INITIAL_WIDTH}x{INITIAL_HEIGHT}')
     root.title('openbestand')
 
-    app = App(root, bt.client)
+    App(root, bt.client)
 
     try:
         root.mainloop()

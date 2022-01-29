@@ -1,12 +1,12 @@
 [tool.poetry]
 name = "openbestand"
-version = "0.1.0"
+version = "0.2.0"
 description = "An opensource client for the Bestand posture corrector."
 authors = ["Jason P. Leasure <jpleasu@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-bleak = "^0.13.0"
+bleak = "^0.14.1"
 aioconsole = "^0.3.3"
 
 [tool.poetry.dev-dependencies]
