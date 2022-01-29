@@ -5,7 +5,7 @@ A basic client for the [Bestand Posture Trainer & Corrector](http://bestand.com/
 
 To install or update from a release: 
 ```bash
-pip3 install https://github.com/jpleasu/openbestand/releases/download/openbestand-0.1.0/openbestand-0.1.0.tar.gz
+pip3 install https://github.com/jpleasu/openbestand/releases/download/openbestand-0.2.0/openbestand-0.2.0.tar.gz
 ```
 
 ## Development

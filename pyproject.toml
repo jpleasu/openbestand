@@ -6,7 +6,7 @@ authors = ["Jason P. Leasure <jpleasu@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-bleak = "^0.14.1"
+bleak = "^0.14.2"
 aioconsole = "^0.3.3"
 
 [tool.poetry.dev-dependencies]

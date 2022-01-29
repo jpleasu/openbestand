@@ -191,7 +191,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "6861a9c51b8851cac1f38b0470a326d727a3c067f6d1332903b9c70c4e576478"
+content-hash = "2aa5e74cf0842d610db58fb3e9727dba8c54870a683a4e102e7df5c162bb0ae6"
 
 [metadata.files]
 aioconsole = [
